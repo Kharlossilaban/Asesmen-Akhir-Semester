@@ -1,0 +1,38 @@
+# Flutter/Dart specific
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Android specific
+book_library/android/.gradle/
+book_library/android/captures/
+book_library/android/local.properties
+book_library/android/.cxx/
+book_library/android/app/debug
+book_library/android/app/profile
+book_library/android/app/release
+
+# VS Code
+.vscode/
+
+# Misc
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# Keep APK file but ignore other build outputs
+!book_library/build/app/outputs/flutter-apk/app-release.apk

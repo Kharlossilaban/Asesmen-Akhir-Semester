@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "946726660126",
+    "project_id": "book-library-69ed3",
+    "storage_bucket": "book-library-69ed3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:946726660126:android:b8eacc6127d00ea79be60f",
+        "android_client_info": {
+          "package_name": "com.kharlos.book_library"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh0drQfbo4o2yH_NyfaXGfkk_4YZZCISg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
