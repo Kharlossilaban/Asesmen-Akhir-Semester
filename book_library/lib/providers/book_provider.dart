@@ -1,14 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/book.dart';
 import '../services/book_service.dart';
-import '../services/storage_service.dart';
 
-/// Book Provider - manages books data with Firestore and Storage
+/// Book Provider - manages books data with Firestore (Storage OPTIONAL)
 class BookProvider extends ChangeNotifier {
   final BookService _bookService = BookService();
-  final StorageService _storageService = StorageService();
 
   // State variables
   List<Book> _books = [];
@@ -79,31 +76,17 @@ class BookProvider extends ChangeNotifier {
     _booksSubscription = null;
   }
 
-  /// Add a new book with optional image upload
-  Future<bool> addBook(Book book, {File? imageFile}) async {
+  /// Add a new book (cover URL dari input manual user)
+  Future<bool> addBook(Book book) async {
     _setLoading(true);
     _setError(null);
 
     try {
-      String coverUrl = book.coverUrl;
-
-      // Upload image if provided
-      if (imageFile != null && book.userId.isNotEmpty) {
-        coverUrl = await _storageService.uploadBookCover(
-          imageFile: imageFile,
-          userId: book.userId,
-          bookId: book.id,
-        );
-      }
-
-      // Create book with cover URL
-      final bookWithCover = book.copyWith(coverUrl: coverUrl);
-
       // Add to Firestore
-      final newId = await _bookService.addBook(bookWithCover);
+      final newId = await _bookService.addBook(book);
 
       // Add to local list with new ID
-      final newBook = bookWithCover.copyWith(id: newId);
+      final newBook = book.copyWith(id: newId);
       _books.insert(0, newBook);
 
       _setLoading(false);
@@ -116,34 +99,14 @@ class BookProvider extends ChangeNotifier {
     }
   }
 
-  /// Update an existing book with optional new image
-  Future<bool> updateBook(Book book, {File? newImageFile}) async {
+  /// Update an existing book
+  Future<bool> updateBook(Book book) async {
     _setLoading(true);
     _setError(null);
 
     try {
-      String coverUrl = book.coverUrl;
-
-      // Upload new image if provided
-      if (newImageFile != null && book.userId.isNotEmpty) {
-        // Delete old image if exists
-        if (book.coverUrl.isNotEmpty) {
-          await _storageService.deleteBookCoverByUrl(book.coverUrl);
-        }
-
-        // Upload new image
-        coverUrl = await _storageService.uploadBookCover(
-          imageFile: newImageFile,
-          userId: book.userId,
-          bookId: book.id,
-        );
-      }
-
-      // Update book with new cover URL
-      final updatedBook = book.copyWith(
-        coverUrl: coverUrl,
-        updatedAt: DateTime.now(),
-      );
+      // Update book with timestamp
+      final updatedBook = book.copyWith(updatedAt: DateTime.now());
 
       // Update in Firestore
       await _bookService.updateBook(updatedBook);
@@ -164,23 +127,12 @@ class BookProvider extends ChangeNotifier {
     }
   }
 
-  /// Delete a book and its cover image
+  /// Delete a book
   Future<bool> deleteBook(String bookId) async {
     _setLoading(true);
     _setError(null);
 
     try {
-      // Find the book to get cover URL
-      final book = _books.firstWhere(
-        (b) => b.id == bookId,
-        orElse: () => throw 'Buku tidak ditemukan',
-      );
-
-      // Delete cover image if exists
-      if (book.coverUrl.isNotEmpty) {
-        await _storageService.deleteBookCoverByUrl(book.coverUrl);
-      }
-
       // Delete from Firestore
       await _bookService.deleteBook(bookId);
 

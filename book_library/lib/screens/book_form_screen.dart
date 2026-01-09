@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/book.dart';
@@ -32,7 +30,6 @@ class _BookFormScreenState extends State<BookFormScreen> {
   String? _selectedGenre;
   String _selectedStatus = 'unread';
   double _rating = 0.0;
-  File? _selectedImage;
   String _existingCoverUrl = '';
   bool _isLoading = false;
 
@@ -62,22 +59,6 @@ class _BookFormScreenState extends State<BookFormScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 800,
-      maxHeight: 1200,
-      imageQuality: 80,
-    );
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
-  }
-
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -102,21 +83,16 @@ class _BookFormScreenState extends State<BookFormScreen> {
         status: _selectedStatus,
         rating: _rating,
         review: _reviewController.text.trim(),
-        coverUrl: _existingCoverUrl,
+        coverUrl: _existingCoverUrl, // URL dari text input
         createdAt: widget.book?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
       bool success;
       if (isEditMode) {
-        // Update with optional new image
-        success = await bookProvider.updateBook(
-          book,
-          newImageFile: _selectedImage,
-        );
+        success = await bookProvider.updateBook(book);
       } else {
-        // Add with optional image
-        success = await bookProvider.addBook(book, imageFile: _selectedImage);
+        success = await bookProvider.addBook(book);
       }
 
       if (!mounted) return;
@@ -155,65 +131,62 @@ class _BookFormScreenState extends State<BookFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Image picker
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
+                  // Cover URL Preview
+                  if (_existingCoverUrl.isNotEmpty)
+                    Container(
                       height: 200,
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
-                      child: _selectedImage != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                _selectedImage!,
-                                fit: BoxFit.contain,
-                              ),
-                            )
-                          : _existingCoverUrl.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                _existingCoverUrl,
-                                fit: BoxFit.contain,
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value:
-                                              loadingProgress
-                                                      .expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                        .cumulativeBytesLoaded /
-                                                    loadingProgress
-                                                        .expectedTotalBytes!
-                                              : null,
-                                        ),
-                                      );
-                                    },
-                              ),
-                            )
-                          : Column(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          _existingCoverUrl,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.add_photo_alternate_outlined,
+                                  Icons.broken_image_outlined,
                                   size: 48,
                                   color: Colors.grey.shade400,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Tap untuk pilih gambar cover',
+                                  'Gambar tidak dapat dimuat',
                                   style: TextStyle(color: Colors.grey.shade500),
                                 ),
                               ],
-                            ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
+                  if (_existingCoverUrl.isNotEmpty) const SizedBox(height: 16),
+
+                  // Cover URL Text Field
+                  TextFormField(
+                    initialValue: _existingCoverUrl,
+                    decoration: const InputDecoration(
+                      labelText: 'URL Gambar Cover (opsional)',
+                      hintText: 'https://example.com/cover.jpg',
+                      prefixIcon: Icon(Icons.link),
+                      helperText: 'Masukkan URL gambar dari internet',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _existingCoverUrl = value.trim();
+                      });
+                    },
                   ),
                   const SizedBox(height: 24),
 

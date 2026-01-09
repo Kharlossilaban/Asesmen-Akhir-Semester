@@ -127,6 +127,8 @@ class BookService {
   /// Handle Firestore errors
   String _handleFirestoreError(String code) {
     switch (code) {
+      case 'failed-precondition':
+        return 'Database belum siap. Pastikan Firestore Database sudah dibuat di Firebase Console (Cloud Firestore → Create Database → Test Mode).';
       case 'permission-denied':
         return 'Tidak memiliki izin untuk mengakses data';
       case 'unavailable':
